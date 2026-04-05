@@ -1,0 +1,38 @@
+# Java/Spring Boot
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+.factorypath
+
+# Databases
+data/
+*.db
+*.h2.db
+
+# Storage/Uploads
+uploads/
+resumes/
+
+# Logs
+*.log
+logs/
+
+# Frontend/Node (if any)
+node_modules/
+dist/
+.env
+
+# System
+Thumbs.db
+.DS_Store

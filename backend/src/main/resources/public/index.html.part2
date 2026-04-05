@@ -1,0 +1,80 @@
+<section class="py-32 px-6 lg:px-24 overflow-hidden" id="about">
+    <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div class="relative flex justify-center" data-aos="fade-right" data-aos-duration="1200">
+                <div class="w-72 h-80 relative group">
+                    <div class="absolute inset-0 bg-primary-container/20 rounded-full blur-3xl transition-all duration-700 group-hover:bg-primary-container/40 group-hover:blur-2xl"></div>
+                    <div class="relative w-full h-full overflow-hidden border-2 border-primary-container p-1 rounded-3xl transform transition-transform duration-700 group-hover:scale-105 shadow-xl">
+                        <img alt="Rachana S Reddy" class="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-700" src="Rachu_selfie.jpeg"/>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-8">
+                <div data-aos="fade-left" data-aos-duration="1000">
+                    <h2 class="text-4xl font-headline font-bold mb-2 dark:text-white">About Me</h2>
+                    <div class="w-20 h-1 bg-secondary rounded-full"></div>
+                </div>
+                <p data-aos="fade-up" data-aos-delay="200" class="text-on-surface-variant text-lg leading-relaxed">
+                    I'm a passionate Full Stack Developer with a strong foundation in backend engineering using Spring Boot and REST APIs. I love building clean, efficient, and scalable web applications that solve real-world problems.
+                </p>
+                <div data-aos="zoom-in" data-aos-delay="600" class="flex flex-wrap gap-3">
+                    <span class="glass-card px-4 py-2 rounded-full font-label text-sm text-primary border-primary-container/30 hover:bg-primary hover:text-white transition-colors cursor-default">Java</span>
+                    <span class="glass-card px-4 py-2 rounded-full font-label text-sm text-primary border-primary-container/30 hover:bg-primary hover:text-white transition-colors cursor-default">Spring Boot</span>
+                    <span class="glass-card px-4 py-2 rounded-full font-label text-sm text-primary border-primary-container/30 hover:bg-primary hover:text-white transition-colors cursor-default">REST APIs</span>
+                    <span class="glass-card px-4 py-2 rounded-full font-label text-sm text-primary border-primary-container/30 hover:bg-primary hover:text-white transition-colors cursor-default">MySQL</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-32 px-6 lg:px-24 bg-surface-container-low/30 overflow-hidden" id="skills">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-20" data-aos="fade-down">
+            <h2 class="text-4xl font-headline font-bold mb-4 dark:text-white">Tech Stack</h2>
+            <div class="w-24 h-1 bg-secondary mx-auto rounded-full"></div>
+        </div>
+        <div id="skills-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </div>
+</section>
+
+<section class="py-32 px-6 lg:px-24 overflow-hidden" id="projects">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-end mb-16" data-aos="fade-right">
+            <div>
+                <h2 class="text-4xl font-headline font-bold mb-2 dark:text-white">Selected Projects</h2>
+                <div class="w-20 h-1 bg-secondary rounded-full"></div>
+            </div>
+        </div>
+        <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </div>
+</section>
+
+<section class="py-32 px-6 lg:px-24 bg-surface-container-lowest/50 overflow-hidden" id="experience">
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-20" data-aos="fade-down">
+            <h2 class="text-4xl font-headline font-bold mb-4 dark:text-white">Experience</h2>
+            <div class="w-24 h-1 bg-secondary mx-auto rounded-full"></div>
+        </div>
+        <div id="experience-container" class="relative border-l-2 border-primary-container/30 pl-8 space-y-16"></div>
+    </div>
+</section>
+
+<footer class="border-t border-white/5 w-full py-12 flex flex-col items-center gap-4 px-8 text-center bg-[var(--bg-color)]">
+    <div id="footer-social-links" class="flex gap-8 mb-8"></div>
+    <button id="admin-access-btn" class="text-sm text-secondary/50 hover:text-secondary transition-all uppercase tracking-widest mt-4">Admin Access</button>
+</footer>
+
+<div id="admin-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md hidden">
+    <div class="glass-card w-full max-w-5xl h-[85vh] rounded-3xl p-8 overflow-y-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-2xl font-bold dark:text-white">CMS Panel</h3>
+            <button id="close-modal" class="text-on-surface-variant hover:text-white transition-colors">Close</button>
+        </div>
+        <div id="admin-login-step" class="text-center py-20">
+            <input type="password" id="admin-token-input" class="bg-surface-container-low p-4 rounded-lg mr-4 border border-outline-variant" placeholder="Admin Token"/>
+            <button id="admin-login-btn" class="bg-primary-container px-8 py-4 rounded-lg text-white">Login</button>
+            <p id="admin-login-msg" class="text-error mt-4"></p>
+        </div>
+    </div>
+</div>

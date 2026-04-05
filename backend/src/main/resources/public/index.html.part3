@@ -1,0 +1,93 @@
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    const API_BASE_URL = '/api';
+    const skillIcons = { 'Backend': 'fa-solid fa-server', 'Frontend': 'fa-solid fa-desktop', 'Infrastructure': 'fa-solid fa-cloud' };
+    const expConfig = {
+        'WORK': { iconBg: 'bg-secondary' },
+        'EDUCATION': { iconBg: 'bg-primary-container' },
+        'CERTIFICATION': { iconBg: 'bg-primary-container' }
+    };
+
+    async function fetchData(endpoint) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/${endpoint}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        } catch (error) { console.error('Fetch error:', error); }
+    }
+
+    async function loadSkills() {
+        const skills = await fetchData('skills');
+        const container = document.getElementById('skills-container');
+        if (!container || !skills) return;
+        container.innerHTML = skills.map(s => `
+            <div class="glass-card p-6 rounded-xl border-glow flex items-center gap-4">
+                <i class="${skillIcons[s.category] || 'fa-solid fa-code'} text-secondary"></i>
+                <div>
+                    <h4 class="font-bold dark:text-white">${s.name}</h4>
+                    <p class="text-xs text-on-surface-variant">${s.category}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function loadProjects() {
+        const projects = await fetchData('projects');
+        const container = document.getElementById('projects-container');
+        if (!container || !projects) return;
+        container.innerHTML = projects.map(p => `
+            <div class="glass-card p-6 rounded-xl border-glow group">
+                <img src="${p.imageUrl || 'https://via.placeholder.com/400x250'}" class="w-full h-48 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform">
+                <h4 class="text-xl font-bold mb-2 dark:text-white">${p.title}</h4>
+                <p class="text-on-surface-variant text-sm line-clamp-2 mb-4">${p.description}</p>
+                <div class="flex gap-4">
+                    <a href="${p.codeUrl}" target="_blank" class="text-secondary text-sm">Code</a>
+                    <a href="${p.demoUrl}" target="_blank" class="text-primary text-sm">Demo</a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function loadExperience() {
+        const experiences = await fetchData('experience');
+        const container = document.getElementById('experience-container');
+        if (!container || !experiences) return;
+        container.innerHTML = experiences.map(e => `
+            <div class="relative pl-12 pb-12 group last:pb-0">
+                <div class="absolute left-0 top-0 w-8 h-8 ${expConfig[e.type]?.iconBg || 'bg-primary'} rounded-full flex items-center justify-center text-white z-10 transition-transform group-hover:scale-110">
+                    <i class="fa-solid ${e.type === 'WORK' ? 'fa-briefcase' : 'fa-graduation-cap'} text-xs"></i>
+                </div>
+                <div class="glass-card p-6 rounded-2xl border-glow">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold dark:text-white text-lg">${e.role}</h4>
+                        <span class="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full">${e.period}</span>
+                    </div>
+                    <p class="text-secondary font-medium mb-2">${e.organization}</p>
+                    <p class="text-on-surface-variant text-sm whitespace-pre-wrap">${e.description}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        await Promise.all([loadSkills(), loadProjects(), loadExperience()]);
+        AOS.init({ duration: 800, once: true });
+        
+        // Theme toggle
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-toggle');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+        });
+
+        // Splash screen cleanup
+        setTimeout(() => {
+            document.getElementById('splash-screen').classList.add('fade-out');
+            document.body.classList.remove('loading');
+            setTimeout(() => document.getElementById('splash-screen').remove(), 800);
+        }, 1500);
+    });
+</script>
+</body>
+</html>
