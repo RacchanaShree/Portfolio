@@ -1,6 +1,7 @@
 package com.portfolio.controller;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -67,41 +68,41 @@ public class ResumeController {
     public ResponseEntity<Resource> downloadResume() {
         try {
             Path uploadDir = Paths.get(storagePath);
-            if (!Files.exists(uploadDir)) {
-                return ResponseEntity.notFound().build();
-            }
-
-            // Resolve and normalize the path to the fixed resume file
             Path filePath = uploadDir.resolve(RESUME_FILENAME).normalize();
 
-            // SECURITY: Ensure the resolved path is strictly inside the upload directory
-            // This blocks any path traversal attacks (e.g., ../../etc/passwd)
-            Path canonicalUploadDir = uploadDir.toRealPath();
-            Path canonicalFilePath = filePath.toRealPath();
-            if (!canonicalFilePath.startsWith(canonicalUploadDir)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            // 1. Try serving from filesystem (Uploads)
+            if (Files.exists(filePath)) {
+                // SECURITY: Ensure the resolved path is strictly inside the upload directory
+                Path canonicalUploadDir = uploadDir.toRealPath();
+                Path canonicalFilePath = filePath.toRealPath();
+                if (canonicalFilePath.startsWith(canonicalUploadDir) && 
+                    canonicalFilePath.getFileName().toString().equals(RESUME_FILENAME)) {
+                    
+                    UrlResource resource = new UrlResource(canonicalFilePath.toUri());
+                    if (resource.exists() && resource.isReadable()) {
+                        return serveResource(resource);
+                    }
+                }
             }
 
-            // SECURITY: Double-check the filename matches exactly — no dynamic filenames
-            if (!canonicalFilePath.getFileName().toString().equals(RESUME_FILENAME)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            // 2. Fallback: Try serving from classpath (src/main/resources/static/)
+            ClassPathResource staticResource = new ClassPathResource("static/" + RESUME_FILENAME);
+            if (staticResource.exists()) {
+                return serveResource(staticResource);
             }
 
-            UrlResource resource = new UrlResource(canonicalFilePath.toUri());
-            if (resource.exists() && resource.isReadable()) {
-                return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_PDF)
-                        .header(HttpHeaders.CONTENT_DISPOSITION,
-                                "attachment; filename=\"resume.pdf\"")
-                        // Prevent browser from caching the file so old versions aren't served
-                        .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
-                        .body(resource);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
+            return ResponseEntity.notFound().build();
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private ResponseEntity<Resource> serveResource(Resource resource) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"resume.pdf\"")
+                .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                .body(resource);
     }
 
     @DeleteMapping
@@ -131,6 +132,9 @@ public class ResumeController {
     @GetMapping("/status")
     public ResponseEntity<Map<String, Boolean>> getStatus() {
         Path filePath = Paths.get(storagePath).resolve(RESUME_FILENAME);
-        return ResponseEntity.ok(Collections.singletonMap("exists", Files.exists(filePath)));
+        boolean existsOnFs = Files.exists(filePath);
+        boolean existsOnClasspath = new ClassPathResource("static/" + RESUME_FILENAME).exists();
+        
+        return ResponseEntity.ok(Collections.singletonMap("exists", existsOnFs || existsOnClasspath));
     }
 }
