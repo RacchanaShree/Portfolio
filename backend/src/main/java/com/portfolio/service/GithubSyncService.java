@@ -20,7 +20,18 @@ public class GithubSyncService {
 
     public void syncRepos() {
         try {
-            GithubRepo[] repos = restTemplate.getForObject(GITHUB_API_URL, GithubRepo[].class);
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.set("User-Agent", "Portfolio-App");
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
+            
+            org.springframework.http.ResponseEntity<GithubRepo[]> response = restTemplate.exchange(
+                GITHUB_API_URL, 
+                org.springframework.http.HttpMethod.GET, 
+                entity, 
+                GithubRepo[].class
+            );
+            
+            GithubRepo[] repos = response.getBody();
             if (repos == null) return;
             
             for (GithubRepo repo : repos) {
@@ -34,7 +45,16 @@ public class GithubSyncService {
                 Project project = existingProject.orElseGet(() -> {
                     Project p = new Project();
                     p.setDeleted(false); 
-                    p.setImageUrl("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600&h=400");
+                    
+                    // Assign a smart placeholder image based on name keywords
+                    String name = repo.name.toLowerCase();
+                    String imgUrl = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600"; // Default: Code
+                    if (name.contains("assist") || name.contains("jarvis") || name.contains("ai")) imgUrl = "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=600"; // AI
+                    else if (name.contains("detec") || name.contains("framework")) imgUrl = "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600"; // Tech/Security
+                    else if (name.contains("translat") || name.contains("ling")) imgUrl = "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600"; // Language/Book
+                    else if (name.contains("portfolio")) imgUrl = "Rachu_proff.jpeg"; // Personal
+                    
+                    p.setImageUrl(imgUrl);
                     p.setFeatured(false);
                     return p;
                 });

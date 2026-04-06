@@ -1,0 +1,33 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Runs every 2 days at midnight UTC (0 0 */2 * *)
+    # This ensures the 7-day inactivity pause never hits, but also isn't so frequent to abuse abuse limits
+    - cron: '0 0 */2 * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  ping-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ping API to wake database
+        run: |
+          echo "Pinging Portfolio Backend to keep Supabase active..."
+          curl -s -o /dev/null -w "%{http_code}" https://portfolio-1-rd3h.onrender.com/api/skills
+          echo -e "\nPing complete!"
+
+      - name: Update last ping timestamp
+        run: |
+          date > .github/last_ping.txt
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/last_ping.txt
+          git commit -m "Auto-ping: Update timestamp [skip ci]" || echo "No changes to commit"
+          git push

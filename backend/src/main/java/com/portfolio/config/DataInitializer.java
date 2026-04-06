@@ -36,14 +36,17 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try {
-            // Seed Skills
+            // Seed Skills - Check if skills already exist (idempotent)
             if (skillRepository.count() == 0) {
                 seedSkills();
                 System.out.println("Skills seeded successfully.");
+            } else {
+                System.out.println("Skills already present, skipping initial seed.");
             }
 
-            // Seed Projects from GitHub - Always run on startup
+            // Seed Projects from GitHub - Always run on startup (logic handles duplicates internally)
             try {
+                System.out.println("Starting GitHub repository sync...");
                 githubSyncService.syncRepos();
                 System.out.println("GitHub repositories synced successfully.");
             } catch (Exception e) {

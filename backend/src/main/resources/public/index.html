@@ -814,18 +814,39 @@
     }
 
 
-    async function fetchData(endpoint) {
+    async function fetchData(endpoint, retries = 6, baseDelay = 1000) {
         const headers = {};
         if (typeof currentAdminToken !== 'undefined' && currentAdminToken) {
             headers['X-Admin-Token'] = currentAdminToken;
         }
-        try {
-            const response = await fetch(`${API_BASE_URL}/${endpoint}`, { headers });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Fetch error:', error);
-            throw error;
+        
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${endpoint}`, { headers });
+                
+                if (response.ok) {
+                    return await response.json();
+                }
+                
+                // If it's a 5xx error (Render waking up), retry
+                if (response.status >= 500 && i < retries - 1) {
+                    console.warn(`Server waking up (502/503). Retrying ${endpoint}... (${i+1}/${retries})`);
+                    await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i))); // Exponential backoff
+                    continue;
+                }
+                
+                // If it's a 4xx error (e.g. 404), throw immediately it's not a sleep issue
+                throw new Error(`HTTP error! status: ${response.status}`);
+                
+            } catch (error) {
+                // Network errors (fetch failed entirely, server unreachable while starting container)
+                if (i === retries - 1) {
+                    console.error(`Final fetch error for ${endpoint}:`, error);
+                    throw error;
+                }
+                console.warn(`Network unavailable. Retrying ${endpoint}... (${i+1}/${retries})`);
+                await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i)));
+            }
         }
     }
 
@@ -1003,18 +1024,21 @@
         // Trigger background sync with GitHub - NON-BLOCKING
         fetch(`${API_BASE_URL}/projects/sync`).catch(e => console.error("Sync error:", e));
 
-        // Load dynamic data with resilience
+        // Load dynamic data with resilience: Fetch independently so one failure doesn't crash all
         try {
-            await Promise.all([
-                loadSkills(),
-                loadProjects(),
-                loadExperience(),
-                loadSocialLinks()
+            console.log("Waking up server and loading data...");
+            
+            // Run all fetches independently and handle their own failures
+            await Promise.allSettled([
+                loadSkills().catch(e => console.error("Failed loading skills:", e)),
+                loadProjects().catch(e => console.error("Failed loading projects:", e)),
+                loadExperience().catch(e => console.error("Failed loading experience:", e)),
+                loadSocialLinks().catch(e => console.error("Failed loading social links:", e))
             ]);
-            console.log("Portfolio data loaded successfully.");
+            
+            console.log("Portfolio data load sequence finished.");
         } catch (error) {
             console.error("Critical error during data loading:", error);
-            // Even if some data is missing, we want the page to "work"
         } finally {
             // ALWAYS initialize animations and visibility
             initAOS();
