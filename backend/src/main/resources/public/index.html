@@ -295,6 +295,40 @@
         opacity: 0;
         filter: blur(15px);
         animation: splash-entrance 1s cubic-bezier(0.23, 1, 0.32, 1) forwards 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        z-index: 10;
+    }
+    .splash-panel {
+        position: absolute;
+        inset: 0;
+        background: #0d0d1a;
+        transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+        z-index: 1;
+    }
+    .splash-panel-left {
+        left: 0;
+        width: 50%;
+        border-right: 1px solid rgba(65, 238, 194, 0.1);
+    }
+    .splash-panel-right {
+        right: 0;
+        width: 50%;
+        left: 50%;
+        border-left: 1px solid rgba(123, 47, 190, 0.1);
+    }
+    #splash-screen.clearing .splash-panel-left {
+        transform: translateX(-100%);
+    }
+    #splash-screen.clearing .splash-panel-right {
+        transform: translateX(100%);
+    }
+    #splash-screen.clearing .splash-logo-container {
+        opacity: 0;
+        transform: scale(0.9);
+        transition: all 0.5s ease;
     }
     @keyframes splash-entrance {
         0% { transform: scale(0.8); opacity: 0; filter: blur(15px); }
@@ -375,6 +409,8 @@
 
 <!-- Splash Screen Intro -->
 <div id="splash-screen">
+    <div class="splash-panel splash-panel-left"></div>
+    <div class="splash-panel splash-panel-right"></div>
     <div class="splash-nebula"></div>
     <!-- Decorative Particles -->
     <div class="splash-particle" style="top: 20%; left: 15%; animation-delay: 0s;"></div>
@@ -387,6 +423,7 @@
         <div class="logo-rsr-box">
             <span class="logo-rsr-text">RSR</span>
         </div>
+        <div id="splash-status" class="splash-status">Initializing System...</div>
     </div>
 </div>
 
@@ -831,6 +868,8 @@
                 // If it's a 5xx error (Render waking up), retry
                 if (response.status >= 500 && i < retries - 1) {
                     console.warn(`Server waking up (502/503). Retrying ${endpoint}... (${i+1}/${retries})`);
+                    const statusEl = document.getElementById('splash-status');
+                    if (statusEl) statusEl.textContent = "Waking up server...";
                     await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i))); // Exponential backoff
                     continue;
                 }
@@ -844,6 +883,8 @@
                     console.error(`Final fetch error for ${endpoint}:`, error);
                     throw error;
                 }
+                const statusEl = document.getElementById('splash-status');
+                if (statusEl) statusEl.textContent = "Waking up server...";
                 console.warn(`Network unavailable. Retrying ${endpoint}... (${i+1}/${retries})`);
                 await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i)));
             }
@@ -1572,17 +1613,21 @@
         window.scrollTo(0, 0);
 
         const clearSplash = () => {
-            if (splash.classList.contains('clearing')) return; // Prevent double trigger
+            if (clearTriggered) return;
+            clearTriggered = true;
+            if (splashStatus) splashStatus.textContent = "System Ready";
             splash.classList.add('clearing');
             
             setTimeout(() => {
                 splash.classList.add('fade-out');
                 document.body.classList.remove('loading');
-                window.scrollTo(0, 0); // Re-enforce top position
+                window.scrollTo(0, 0);
                 setTimeout(() => {
                     if (splash.parentElement) splash.remove();
-                }, 600); // Clean up after transition
-            }, 1200); // Premium hold duration
+                    // Initialize AOS after splash is removed to ensure animations trigger correctly
+                    if (typeof initAOS === 'function') initAOS();
+                }, 800);
+            }, 600);
         };
 
         // Clear when everything is ready or if load takes too long (failsafe)
