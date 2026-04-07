@@ -1049,6 +1049,25 @@
         }
     }
 
+    // Resume Visibility check
+    async function checkResumeStatus() {
+        try {
+            const status = await fetchData('resume/status');
+            const resumeBtn = document.getElementById('resume-download-btn');
+            const resumeMsg = document.getElementById('resume-msg');
+            if (status.exists) {
+                if (resumeBtn) resumeBtn.disabled = false;
+                if (resumeMsg) resumeMsg.classList.add('hidden');
+            } else {
+                if (resumeBtn) resumeBtn.disabled = true;
+                if (resumeMsg) resumeMsg.classList.remove('hidden');
+            }
+        } catch (err) { 
+            const resumeBtn = document.getElementById('resume-download-btn');
+            if (resumeBtn) resumeBtn.disabled = true;
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", async () => {
         // Trigger background sync with GitHub - NON-BLOCKING
         fetch(`${API_BASE_URL}/projects/sync`).catch(e => console.error("Sync error:", e));
@@ -1502,22 +1521,7 @@
             } catch (err) { updateMsg('Delete error', true); }
         });
 
-        // Resume Visibility check
-        async function checkResumeStatus() {
-            try {
-                const status = await fetchData('resume/status');
-                if (status.exists) {
-                    if (resumeBtn) resumeBtn.disabled = false;
-                    if (resumeMsg) resumeMsg.classList.add('hidden');
-                } else {
-                    if (resumeBtn) resumeBtn.disabled = true;
-                    if (resumeMsg) resumeMsg.classList.remove('hidden');
-                }
-            } catch (err) { 
-                if (resumeBtn) resumeBtn.disabled = true;
-            }
-        }
-        checkResumeStatus();
+        // checkResumeStatus() call moved to IIFE and DOMContentLoaded start
 
         if (resumeBtn) {
             resumeBtn.addEventListener('click', () => {
