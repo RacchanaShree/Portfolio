@@ -1601,9 +1601,14 @@
                 checkResumeStatus()
             ]);
 
-            await Promise.all([dataLoad, minSplashTime]);
-            console.log("Portfolio data loaded successfully.");
-            if (splashStatus) splashStatus.textContent = "System Ready";
+            // Consistent 2-second cinematic wait
+            await minSplashTime;
+            
+            // Log if data is ready or still in progress (non-blocking)
+            dataLoad.then(() => {
+                console.log("Portfolio data ready.");
+                if (splashStatus) splashStatus.textContent = "System Ready";
+            });
             
         } catch (e) {
             console.error("Error loading portfolio data:", e);
