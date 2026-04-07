@@ -301,30 +301,6 @@
         gap: 2rem;
         z-index: 10;
     }
-    .splash-panel {
-        position: absolute;
-        inset: 0;
-        background: #0d0d1a;
-        transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
-        z-index: 1;
-    }
-    .splash-panel-left {
-        left: 0;
-        width: 50%;
-        border-right: 1px solid rgba(65, 238, 194, 0.1);
-    }
-    .splash-panel-right {
-        right: 0;
-        width: 50%;
-        left: 50%;
-        border-left: 1px solid rgba(123, 47, 190, 0.1);
-    }
-    #splash-screen.clearing .splash-panel-left {
-        transform: translateX(-100%);
-    }
-    #splash-screen.clearing .splash-panel-right {
-        transform: translateX(100%);
-    }
     #splash-screen.clearing .splash-logo-container {
         opacity: 0;
         transform: scale(0.9);
@@ -424,8 +400,6 @@
 
 <!-- Splash Screen Intro -->
 <div id="splash-screen">
-    <div class="splash-panel splash-panel-left"></div>
-    <div class="splash-panel splash-panel-right"></div>
     <div class="splash-nebula"></div>
     <!-- Decorative Particles -->
     <div class="splash-particle" style="top: 20%; left: 15%; animation-delay: 0s;"></div>
@@ -874,7 +848,16 @@
         
         for (let i = 0; i < retries; i++) {
             try {
-                const response = await fetch(`${API_BASE_URL}/${endpoint}`, { headers });
+                // Add an explicit timeout to prevent 20-minute hangs if the DB connection is stuck
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second manual timeout
+
+                const response = await fetch(`${API_BASE_URL}/${endpoint}`, { 
+                    headers,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
                 
                 if (response.ok) {
                     return await response.json();
@@ -882,9 +865,9 @@
                 
                 // If it's a 5xx error (Render waking up), retry
                 if (response.status >= 500 && i < retries - 1) {
-                    console.warn(`Server waking up (502/503). Retrying ${endpoint}... (${i+1}/${retries})`);
+                    console.warn(`Server waking up (502/503/500). Retrying ${endpoint}... (${i+1}/${retries})`);
                     const statusEl = document.getElementById('splash-status');
-                    if (statusEl) statusEl.textContent = "Waking up server...";
+                    if (statusEl) statusEl.innerHTML = '<span class="text-xs text-slate-400">Database starting up... (~60s)</span> <i class="fa-solid fa-spinner fa-spin text-primary ml-2"></i>';
                     await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i))); // Exponential backoff
                     continue;
                 }
@@ -893,15 +876,15 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
                 
             } catch (error) {
-                // Network errors (fetch failed entirely, server unreachable while starting container)
+                // Network errors or Abort timeouts
                 if (i === retries - 1) {
                     console.error(`Final fetch error for ${endpoint}:`, error);
                     throw error;
                 }
+                console.warn(`Network error or timeout. Retrying ${endpoint}... (${i+1}/${retries})`);
                 const statusEl = document.getElementById('splash-status');
-                if (statusEl) statusEl.textContent = "Waking up server...";
-                console.warn(`Network unavailable. Retrying ${endpoint}... (${i+1}/${retries})`);
-                await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i)));
+                if (statusEl) statusEl.innerHTML = '<span class="text-xs text-slate-400">Waking Database... (~60s)</span> <i class="fa-solid fa-spinner fa-spin text-primary ml-2"></i>';
+                await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i))); // Exponential backoff
             }
         }
     }
@@ -1103,22 +1086,9 @@
         // Trigger background sync with GitHub - NON-BLOCKING
         fetch(`${API_BASE_URL}/projects/sync`).catch(e => console.error("Sync error:", e));
 
-        // Load dynamic data with resilience
-        try {
-            await Promise.all([
-                loadSkills(),
-                loadProjects(),
-                loadExperience(),
-                loadSocialLinks()
-            ]);
-            console.log("Portfolio data loaded successfully.");
-        } catch (error) {
-            console.error("Critical error during data loading:", error);
-            // Even if some data is missing, we want the page to "work"
-        } finally {
-            // ALWAYS initialize animations and visibility
-            initAOS();
-        }
+        // Data loading is handled by the splash screen IIFE below.
+        // Initialize AOS after a short delay to let splash finish.
+        initAOS();
 
         // Back to Top functionality
         const backToTop = document.getElementById('back-to-top');
@@ -1653,31 +1623,30 @@
             if (clearTriggered) return;
             clearTriggered = true;
             if (splashStatus) splashStatus.textContent = "System Ready";
-            splash.classList.add('clearing');
             
+            // Simple fade-out with circle collapse (no split screen)
             setTimeout(() => {
                 splash.classList.add('fade-out');
                 document.body.classList.remove('loading');
                 window.scrollTo(0, 0);
                 setTimeout(() => {
                     if (splash.parentElement) splash.remove();
-                    // Initialize AOS after splash is removed to ensure animations trigger correctly
                     if (typeof initAOS === 'function') initAOS();
                 }, 800);
-            }, 600);
+            }, 400);
         };
 
         // Parallel Data Loading & Splash Management
         try {
             const statusTimeout = setTimeout(() => {
-                if (splashStatus) splashStatus.textContent = "Waking up server...";
+                if (splashStatus) splashStatus.innerHTML = 'Waking up server... <i class="fa-solid fa-spinner fa-spin ml-2"></i>';
             }, 2500);
 
             const dbTimeout = setTimeout(() => {
-                if (splashStatus) splashStatus.textContent = "Connecting to database...";
-            }, 5000);
+                if (splashStatus) splashStatus.innerHTML = '<span class="text-xs text-slate-400">Render Free Tier Container Starting... (~60s)</span> <i class="fa-solid fa-spinner fa-spin text-primary ml-2"></i>';
+            }, 8000);
 
-            // Wait for critical data to be ready
+            // Load all data here (single place, no duplicates)
             await Promise.allSettled([
                 loadSkills(),
                 loadProjects(),
@@ -1685,6 +1654,7 @@
                 loadSocialLinks(),
                 checkResumeStatus()
             ]);
+            console.log("Portfolio data loaded successfully.");
 
             clearTimeout(statusTimeout);
             clearTimeout(dbTimeout);

@@ -301,34 +301,25 @@
         gap: 2rem;
         z-index: 10;
     }
-    .splash-panel {
-        position: absolute;
-        inset: 0;
-        background: #0d0d1a;
-        transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
-        z-index: 1;
-    }
-    .splash-panel-left {
-        left: 0;
-        width: 50%;
-        border-right: 1px solid rgba(65, 238, 194, 0.1);
-    }
-    .splash-panel-right {
-        right: 0;
-        width: 50%;
-        left: 50%;
-        border-left: 1px solid rgba(123, 47, 190, 0.1);
-    }
-    #splash-screen.clearing .splash-panel-left {
-        transform: translateX(-100%);
-    }
-    #splash-screen.clearing .splash-panel-right {
-        transform: translateX(100%);
-    }
     #splash-screen.clearing .splash-logo-container {
         opacity: 0;
         transform: scale(0.9);
         transition: all 0.5s ease;
+    }
+    .splash-status {
+        font-family: 'Space Grotesk', sans-serif;
+        color: #41eec2;
+        font-size: 0.85rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        opacity: 0.6;
+        animation: pulse 2s infinite ease-in-out;
+        text-align: center;
+        min-width: 250px;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 0.4; transform: scale(0.98); }
+        50% { opacity: 0.8; transform: scale(1); }
     }
     @keyframes splash-entrance {
         0% { transform: scale(0.8); opacity: 0; filter: blur(15px); }
@@ -409,8 +400,6 @@
 
 <!-- Splash Screen Intro -->
 <div id="splash-screen">
-    <div class="splash-panel splash-panel-left"></div>
-    <div class="splash-panel splash-panel-right"></div>
     <div class="splash-nebula"></div>
     <!-- Decorative Particles -->
     <div class="splash-particle" style="top: 20%; left: 15%; animation-delay: 0s;"></div>
@@ -859,7 +848,16 @@
         
         for (let i = 0; i < retries; i++) {
             try {
-                const response = await fetch(`${API_BASE_URL}/${endpoint}`, { headers });
+                // Add an explicit timeout to prevent 20-minute hangs if the DB connection is stuck
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second manual timeout
+
+                const response = await fetch(`${API_BASE_URL}/${endpoint}`, { 
+                    headers,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
                 
                 if (response.ok) {
                     return await response.json();
@@ -867,9 +865,9 @@
                 
                 // If it's a 5xx error (Render waking up), retry
                 if (response.status >= 500 && i < retries - 1) {
-                    console.warn(`Server waking up (502/503). Retrying ${endpoint}... (${i+1}/${retries})`);
+                    console.warn(`Server waking up (502/503/500). Retrying ${endpoint}... (${i+1}/${retries})`);
                     const statusEl = document.getElementById('splash-status');
-                    if (statusEl) statusEl.textContent = "Waking up server...";
+                    if (statusEl) statusEl.innerHTML = '<span class="text-xs text-slate-400">Database starting up... (~60s)</span> <i class="fa-solid fa-spinner fa-spin text-primary ml-2"></i>';
                     await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i))); // Exponential backoff
                     continue;
                 }
@@ -878,23 +876,24 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
                 
             } catch (error) {
-                // Network errors (fetch failed entirely, server unreachable while starting container)
+                // Network errors or Abort timeouts
                 if (i === retries - 1) {
                     console.error(`Final fetch error for ${endpoint}:`, error);
                     throw error;
                 }
+                console.warn(`Network error or timeout. Retrying ${endpoint}... (${i+1}/${retries})`);
                 const statusEl = document.getElementById('splash-status');
-                if (statusEl) statusEl.textContent = "Waking up server...";
-                console.warn(`Network unavailable. Retrying ${endpoint}... (${i+1}/${retries})`);
-                await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i)));
+                if (statusEl) statusEl.innerHTML = '<span class="text-xs text-slate-400">Waking Database... (~60s)</span> <i class="fa-solid fa-spinner fa-spin text-primary ml-2"></i>';
+                await new Promise(r => setTimeout(r, baseDelay * Math.pow(1.5, i))); // Exponential backoff
             }
         }
     }
 
     async function loadSkills() {
-        const skills = await fetchData('skills');
-        const container = document.getElementById('skills-container');
-        if (!container || !skills.length) return;
+        try {
+            const skills = await fetchData('skills');
+            const container = document.getElementById('skills-container');
+            if (!container || !skills.length) return false;
 
         // Group skills by category
         const groupedSkills = skills.reduce((acc, skill) => {
@@ -932,12 +931,18 @@
         
         
         if (typeof AOS !== 'undefined') AOS.refresh();
+            return true;
+        } catch (e) {
+            console.error('Error loading skills:', e);
+            return false;
+        }
     }
 
     async function loadProjects() {
-        const projects = await fetchData('projects');
-        const container = document.getElementById('projects-container');
-        if (!container || !projects.length) return;
+        try {
+            const projects = await fetchData('projects');
+            const container = document.getElementById('projects-container');
+            if (!container || !projects.length) return false;
 
         container.innerHTML = '';
         let delay = 100;
@@ -974,12 +979,18 @@
         });
 
         if (typeof AOS !== 'undefined') AOS.refresh();
+            return true;
+        } catch (e) {
+            console.error('Error loading projects:', e);
+            return false;
+        }
     }
 
     async function loadExperience() {
-        const experiences = await fetchData('experience');
-        const container = document.getElementById('experience-container');
-        if (!container || !experiences.length) return;
+        try {
+            const experiences = await fetchData('experience');
+            const container = document.getElementById('experience-container');
+            if (!container || !experiences.length) return false;
 
         container.innerHTML = '';
         let delay = 100;
@@ -1010,54 +1021,64 @@
         });
 
         if (typeof AOS !== 'undefined') AOS.refresh();
+            return true;
+        } catch (e) {
+            console.error('Error loading experience:', e);
+            return false;
+        }
     }
 
     async function loadSocialLinks() {
-        const links = await fetchData('social-links');
-        const heroContainer = document.getElementById('hero-social-links');
-        const footerContainer = document.getElementById('footer-social-links');
-        
-        if (!links || !links.length) return;
+        try {
+            const links = await fetchData('social-links');
+            const heroContainer = document.getElementById('hero-social-links');
+            const footerContainer = document.getElementById('footer-social-links');
+            
+            if (!links || !links.length) return false;
 
-        const nonEmailLinks = links.filter(l => !l.platformName.toLowerCase().includes('email'));
+            const nonEmailLinks = links.filter(l => !l.platformName.toLowerCase().includes('email'));
 
-        const heroHtml = nonEmailLinks.map(link => `
-            <a class="text-on-surface-variant hover:text-secondary transition-colors hover:scale-110 transform duration-300" 
-               href="${link.url}" target="_blank" title="${link.platformName}">
-                <i class="${link.iconName}"></i>
-            </a>
-        `).join('');
+            const heroHtml = nonEmailLinks.map(link => `
+                <a class="text-on-surface-variant hover:text-secondary transition-colors hover:scale-110 transform duration-300" 
+                   href="${link.url}" target="_blank" title="${link.platformName}">
+                    <i class="${link.iconName}"></i>
+                </a>
+            `).join('');
 
-        const footerHtml = nonEmailLinks.map(link => `
-            <a class="text-[#6b7280] hover:text-[#deb7ff] transition-colors hover:scale-125 transform duration-300" 
-               href="${link.url}" target="_blank" title="${link.platformName}">
-                <i class="${link.iconName}"></i>
-            </a>
-        `).join('');
+            const footerHtml = nonEmailLinks.map(link => `
+                <a class="text-[#6b7280] hover:text-[#deb7ff] transition-colors hover:scale-125 transform duration-300" 
+                   href="${link.url}" target="_blank" title="${link.platformName}">
+                    <i class="${link.iconName}"></i>
+                </a>
+            `).join('');
 
-        if (heroContainer) heroContainer.innerHTML = heroHtml;
-        if (footerContainer) footerContainer.innerHTML = footerHtml;
+            if (heroContainer) heroContainer.innerHTML = heroHtml;
+            if (footerContainer) footerContainer.innerHTML = footerHtml;
 
-        // Update contact section links dynamically
-        const emailLink = links.find(l => l.platformName.toLowerCase().includes('email'));
-        if (emailLink) {
-            const emailAnchor = document.getElementById('contact-email-link'); // Note: it's a div now. No href setting needed
-            const emailText = document.getElementById('contact-email-text');
-            const emailIcon = document.getElementById('contact-email-icon');
-            if (emailText) emailText.textContent = emailLink.url.replace('mailto:', '');
-            if (emailIcon) emailIcon.className = `${emailLink.iconName} text-primary group-hover:scale-110 transition-transform`;
-        }
+            // Update contact section links dynamically
+            const emailLink = links.find(l => l.platformName.toLowerCase().includes('email'));
+            if (emailLink) {
+                const emailText = document.getElementById('contact-email-text');
+                const emailIcon = document.getElementById('contact-email-icon');
+                if (emailText) emailText.textContent = emailLink.url.replace('mailto:', '');
+                if (emailIcon) emailIcon.className = `${emailLink.iconName} text-primary group-hover:scale-110 transition-transform`;
+            }
 
-        if (typeof AOS !== 'undefined') AOS.refresh();
+            const linkedinLink = links.find(l => l.platformName.toLowerCase().includes('linkedin'));
+            if (linkedinLink) {
+                const linkedinAnchor = document.getElementById('contact-linkedin-link');
+                const linkedinText = document.getElementById('contact-linkedin-text');
+                const linkedinIcon = document.getElementById('contact-linkedin-icon');
+                if (linkedinAnchor) linkedinAnchor.href = linkedinLink.url;
+                if (linkedinText) linkedinText.textContent = linkedinLink.url.replace('https://', '').replace('www.', '').replace('linkedin.com/in/', '');
+                if (linkedinIcon) linkedinIcon.className = `${linkedinLink.iconName} text-secondary group-hover:scale-110 transition-transform text-2xl`;
+            }
 
-        const linkedinLink = links.find(l => l.platformName.toLowerCase().includes('linkedin'));
-        if (linkedinLink) {
-            const linkedinAnchor = document.getElementById('contact-linkedin-link');
-            const linkedinText = document.getElementById('contact-linkedin-text');
-            const linkedinIcon = document.getElementById('contact-linkedin-icon');
-            if (linkedinAnchor) linkedinAnchor.href = linkedinLink.url;
-            if (linkedinText) linkedinText.textContent = linkedinLink.url.replace('https://', '').replace('www.', '').replace('linkedin.com/in/', '');
-            if (linkedinIcon) linkedinIcon.className = `${linkedinLink.iconName} text-secondary group-hover:scale-110 transition-transform text-2xl`;
+            if (typeof AOS !== 'undefined') AOS.refresh();
+            return true;
+        } catch (e) {
+            console.error('Error loading social links:', e);
+            return false;
         }
     }
 
@@ -1065,25 +1086,9 @@
         // Trigger background sync with GitHub - NON-BLOCKING
         fetch(`${API_BASE_URL}/projects/sync`).catch(e => console.error("Sync error:", e));
 
-        // Load dynamic data with resilience: Fetch independently so one failure doesn't crash all
-        try {
-            console.log("Waking up server and loading data...");
-            
-            // Run all fetches independently and handle their own failures
-            await Promise.allSettled([
-                loadSkills().catch(e => console.error("Failed loading skills:", e)),
-                loadProjects().catch(e => console.error("Failed loading projects:", e)),
-                loadExperience().catch(e => console.error("Failed loading experience:", e)),
-                loadSocialLinks().catch(e => console.error("Failed loading social links:", e))
-            ]);
-            
-            console.log("Portfolio data load sequence finished.");
-        } catch (error) {
-            console.error("Critical error during data loading:", error);
-        } finally {
-            // ALWAYS initialize animations and visibility
-            initAOS();
-        }
+        // Data loading is handled by the splash screen IIFE below.
+        // Initialize AOS after a short delay to let splash finish.
+        initAOS();
 
         // Back to Top functionality
         const backToTop = document.getElementById('back-to-top');
@@ -1601,9 +1606,10 @@
         });
     });
 
-    // --- Robust Splash Screen Transition ---
-    (() => {
+    // --- Smart Splash Screen Transition ---
+    (async () => {
         const splash = document.getElementById('splash-screen');
+        const splashStatus = document.getElementById('splash-status');
         if (!splash) return;
 
         // Force scroll to top on refresh
@@ -1612,30 +1618,58 @@
         }
         window.scrollTo(0, 0);
 
+        let clearTriggered = false;
         const clearSplash = () => {
             if (clearTriggered) return;
             clearTriggered = true;
             if (splashStatus) splashStatus.textContent = "System Ready";
-            splash.classList.add('clearing');
             
+            // Simple fade-out with circle collapse (no split screen)
             setTimeout(() => {
                 splash.classList.add('fade-out');
                 document.body.classList.remove('loading');
                 window.scrollTo(0, 0);
                 setTimeout(() => {
                     if (splash.parentElement) splash.remove();
-                    // Initialize AOS after splash is removed to ensure animations trigger correctly
                     if (typeof initAOS === 'function') initAOS();
                 }, 800);
-            }, 600);
+            }, 400);
         };
 
-        // Clear when everything is ready or if load takes too long (failsafe)
-        window.addEventListener('load', clearSplash);
-        setTimeout(clearSplash, 3000); // 3s Maximum wait time
-        
-        // Handle case where page is already loaded (though rare at startup)
-        if (document.readyState === 'complete') clearSplash();
+        // Parallel Data Loading & Splash Management
+        try {
+            const statusTimeout = setTimeout(() => {
+                if (splashStatus) splashStatus.innerHTML = 'Waking up server... <i class="fa-solid fa-spinner fa-spin ml-2"></i>';
+            }, 2500);
+
+            const dbTimeout = setTimeout(() => {
+                if (splashStatus) splashStatus.innerHTML = '<span class="text-xs text-slate-400">Render Free Tier Container Starting... (~60s)</span> <i class="fa-solid fa-spinner fa-spin text-primary ml-2"></i>';
+            }, 8000);
+
+            // Load all data here (single place, no duplicates)
+            await Promise.allSettled([
+                loadSkills(),
+                loadProjects(),
+                loadExperience(),
+                loadSocialLinks(),
+                checkResumeStatus()
+            ]);
+            console.log("Portfolio data loaded successfully.");
+
+            clearTimeout(statusTimeout);
+            clearTimeout(dbTimeout);
+            if (splashStatus) splashStatus.textContent = "System Ready";
+            
+            // Short delay to let user see "System Ready" before transition
+            setTimeout(clearSplash, 600);
+
+        } catch (e) {
+            console.warn("Fast-tracking splash due to loading error", e);
+            clearSplash();
+        }
+
+        // Failsafe: Max 10 seconds wait
+        setTimeout(clearSplash, 10000);
     })();
 </script>
 </body>
