@@ -12,9 +12,7 @@ Your portfolio is built as a **Spring Boot Monolith** that follows modern full-s
 *   **Tech Stack**: HTML5, Tailwind CSS, and Vanilla JavaScript.
 *   **Dynamic Loading**: The site uses `fetch` APIs to retrieve data from the backend dynamically.
 *   **Animations**: **AOS (Animate On Scroll)** is used for entry animations, and **Font Awesome** provides the iconography.
-*   **Splash Screen**: A cinematic intro that serves two purposes:
-    *   Branding (Your "RSR" logo).
-    *   Hiding the "cold start" lag while the backend wakes up on Render.
+*   **Loading Strategy**: Data is fetched in parallel using `Promise.allSettled` to minimize load times. The UI handles "cold starts" by showing real-time status updates directly in the content areas if needed.
 
 ### 2. Backend (The Logic)
 *   **Tech Stack**: **Java** with **Spring Boot**.
@@ -31,9 +29,9 @@ Your portfolio is built as a **Spring Boot Monolith** that follows modern full-s
 
 ## ❓ Developer FAQ & Solutions
 
-### Q1: Why does the screen go blank after the splash screen?
-**Solution**: This was caused by a synchronization gap between the splash screen removal and the initialization of scroll animations (AOS). 
-*   **The Fix**: I implemented a **Split-Screen animation** that slides two panels out to the sides. I also ensured that **AOS.init()** is called exactly when the splash screen is fully removed, ensuring the main content is visible immediately.
+### Q1: Why was the splash screen removed?
+**Solution**: We removed the heavy CSS-animated splash screen and the split-screen transition because they were causing performance lag on some devices. 
+*   **The Fix**: I simplified the loading logic to fetch data immediately and show the main content as soon as possible. This creates a much snappier user experience while still maintaining the robust retry logic for backend cold starts.
 
 ### Q2: Why use Supabase over a "normal" database?
 **Solution**: Supabase is essentially **Postgres-as-a-Service**. It offers:
@@ -60,9 +58,9 @@ Your portfolio is built as a **Spring Boot Monolith** that follows modern full-s
 ---
 
 ## ✅ Recent Updates Implemented
-- [x] **Split-Screen Splash**: Replaces the old circle-fade with a modern side-split transition.
-- [x] **Real-time Status**: "Waking up server..." status now appears instantly during retries.
-- [x] **Static Resource Sync**: Ensured all `index.html` versions (root, public, and static) are identical and up-to-date.
+- [x] **Performance Optimization**: Removed the heavy splash screen to eliminate UI lag.
+- [x] **Unified Sync**: Ensured all `index.html` versions are identical and optimized for production.
+- [x] **Direct Data Fetching**: Projects and Skills now load faster with parallelized API calls.
 
 ---
 *Created by Rachana S Reddy & Antigravity AI*

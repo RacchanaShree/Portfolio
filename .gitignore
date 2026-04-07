@@ -36,3 +36,7 @@ dist/
 # System
 Thumbs.db
 .DS_Store
+
+# Internal Documentation
+RECRUITER_GUIDE.md
+PROJECT_ARCHITECTURE_AND_FAQ.md

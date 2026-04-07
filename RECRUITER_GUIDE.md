@@ -19,9 +19,9 @@ This portfolio isn't just a static website; it’s a full-stack engineering solu
 
 ## 🏗️ Key Implementation Highlights (The "impressive" parts)
 
-### 1. The "Smart" Splash Screen & Resilience
-**How:** We didn't just show a loading spinner. We implemented a JavaScript-based status monitor that uses `Promise.allSettled` to track multiple backend requests simultaneously.
-**Why:** Because Render’s free tier "sleeps," we needed a way to keep the user engaged while the server wakes up. Our site shows "Waking up server..." in real-time, which is a professional way to handle infrastructure limitations.
+### 1. Parallel Data Loading & Resilience
+**How:** We implemented an optimized fetching strategy using `Promise.allSettled` to load skills, projects, and social links simultaneously.
+**Why:** This approach minimizes the "Time to Interactive" (TTI) for the user. Even if one API call is slow, the rest of the site populates immediately, providing a snappier experience while the backend warms up.
 
 ### 2. Autonomous "Keep-Alive" Heartbeat
 **How:** We created a GitHub Action (`.github/workflows/keep-alive.yml`) that pings your backend every 2 days.
