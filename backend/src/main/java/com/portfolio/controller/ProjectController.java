@@ -3,8 +3,6 @@ package com.portfolio.controller;
 import com.portfolio.model.Project;
 import com.portfolio.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,8 +30,7 @@ public class ProjectController {
         return ResponseEntity.ok("Sync initiated.");
     }
 
-    @Value("${app.admin.token:admin123}")
-    private String adminToken;
+
 
     @GetMapping
     public List<Project> getAllProjects() {
@@ -43,36 +40,22 @@ public class ProjectController {
     }
 
     @GetMapping("/trash")
-    public List<Project> getTrashedProjects(
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
-        if (token == null || !token.equals(adminToken)) {
-            return List.of();
-        }
+    public List<Project> getTrashedProjects() {
         return projectRepository.findAll().stream()
                 .filter(p -> p.isDeleted())
                 .toList();
     }
 
     @PostMapping
-    public ResponseEntity<?> createProject(
-            @RequestBody Project project,
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
-        
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
+    public ResponseEntity<?> createProject(@RequestBody Project project) {
         return ResponseEntity.ok(projectRepository.save(project));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProject(
             @PathVariable Long id,
-            @RequestBody Project projectDetails,
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
+            @RequestBody Project projectDetails) {
         
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
         
         return projectRepository.findById(id).map(project -> {
             project.setTitle(projectDetails.getTitle());
@@ -87,13 +70,8 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProject(
-            @PathVariable Long id,
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
+    public ResponseEntity<?> deleteProject(@PathVariable Long id) {
         
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
         
         return projectRepository.findById(id).map(project -> {
             project.setDeleted(true);
@@ -103,13 +81,8 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}/restore")
-    public ResponseEntity<?> restoreProject(
-            @PathVariable Long id,
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
+    public ResponseEntity<?> restoreProject(@PathVariable Long id) {
         
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
         
         return projectRepository.findById(id).map(project -> {
             project.setDeleted(false);

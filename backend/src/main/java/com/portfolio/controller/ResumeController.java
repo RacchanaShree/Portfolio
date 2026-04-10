@@ -26,21 +26,12 @@ public class ResumeController {
     @Value("${app.resume.storage-path:./uploads/resumes}")
     private String storagePath;
 
-    @Value("${app.admin.token:admin123}")
-    private String adminToken;
-
     // The ONLY file that can ever be served — hardcoded, never dynamic
     private static final String RESUME_FILENAME = "resume.pdf";
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadResume(
-            @RequestParam("file") MultipartFile file,
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
-
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap("error", "Unauthorized"));
-        }
+            @RequestParam("file") MultipartFile file) {
 
         // Only allow PDF uploads
         String contentType = file.getContentType();
@@ -106,13 +97,7 @@ public class ResumeController {
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteResume(
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
-
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap("error", "Unauthorized"));
-        }
+    public ResponseEntity<?> deleteResume() {
 
         try {
             Path filePath = Paths.get(storagePath).resolve(RESUME_FILENAME);

@@ -3,8 +3,6 @@ package com.portfolio.controller;
 import com.portfolio.model.Experience;
 import com.portfolio.repository.ExperienceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,34 +16,21 @@ public class ExperienceController {
     @Autowired
     private ExperienceRepository experienceRepository;
 
-    @Value("${app.admin.token:admin123}")
-    private String adminToken;
-
     @GetMapping
     public List<Experience> getAllExperiences() {
         return experienceRepository.findAll();
     }
 
     @PostMapping
-    public ResponseEntity<?> createExperience(
-            @RequestBody Experience experience,
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
-        
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
+    public ResponseEntity<?> createExperience(@RequestBody Experience experience) {
         return ResponseEntity.ok(experienceRepository.save(experience));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateExperience(
             @PathVariable Long id,
-            @RequestBody Experience expDetails,
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
+            @RequestBody Experience expDetails) {
         
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
         
         return experienceRepository.findById(id).map(exp -> {
             exp.setRole(expDetails.getRole());
@@ -58,13 +43,8 @@ public class ExperienceController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteExperience(
-            @PathVariable Long id,
-            @RequestHeader(value = "X-Admin-Token", required = false) String token) {
+    public ResponseEntity<?> deleteExperience(@PathVariable Long id) {
         
-        if (token == null || !token.equals(adminToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-        }
         
         if (experienceRepository.existsById(id)) {
             experienceRepository.deleteById(id);
