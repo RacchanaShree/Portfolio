@@ -398,6 +398,7 @@
             <a class="nav-link font-['Space_Grotesk'] text-sm tracking-tight text-[var(--text-secondary)] transition-colors" href="#skills">Skills</a>
             <a class="nav-link font-['Space_Grotesk'] text-sm tracking-tight text-[var(--text-secondary)] transition-colors" href="#projects">Projects</a>
             <a class="nav-link font-['Space_Grotesk'] text-sm tracking-tight text-[var(--text-secondary)] transition-colors" href="#experience">Experience</a>
+            <a class="nav-link font-['Space_Grotesk'] text-sm tracking-tight text-[var(--text-secondary)] transition-colors" href="#credentials">Credentials</a>
             <a class="nav-link font-['Space_Grotesk'] text-sm tracking-tight text-[var(--text-secondary)] transition-colors" href="#contact">Contact</a>
         </div>
         <div class="flex items-center gap-4">
@@ -560,6 +561,50 @@
                 <i class="fa-solid fa-download animate-bounce"></i> Download Resume
             </button>
             <p id="resume-msg" class="text-xs text-error hidden">Resume currently unavailable.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Credentials Section -->
+<section class="py-32 px-6 lg:px-24 bg-surface-container-low/20 overflow-hidden" id="credentials">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-20" data-aos="fade-down">
+            <h2 class="text-4xl font-headline font-bold mb-4 dark:text-white">Certifications & Letters</h2>
+            <div class="w-24 h-1 bg-secondary mx-auto rounded-full"></div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <!-- Internship Certificate -->
+            <div data-aos="fade-up" data-aos-delay="100" class="glass-card p-8 rounded-2xl border-glow transform transition-all hover:-translate-y-2 group relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-12 translate-x-12 blur-2xl group-hover:bg-primary/10 transition-colors"></div>
+                <div class="relative z-10">
+                    <div class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                        <i class="fa-solid fa-award text-3xl text-primary"></i>
+                    </div>
+                    <h3 class="text-2xl font-headline font-bold mb-3 dark:text-white">Internship Certificate</h3>
+                    <p class="text-on-surface-variant mb-8 leading-relaxed">Official certification of completion for my GenAI internship at Prodigy Infotech, demonstrating core competencies in LLM integration.</p>
+                    <div class="flex gap-4">
+                        <a href="uploads/Certificate.pdf" target="_blank" class="flex-1 py-3 bg-primary/10 text-primary font-bold rounded-lg hover:bg-primary hover:text-white text-center transition-all">View</a>
+                        <button onclick="downloadFile('uploads/Certificate.pdf', 'Rachana_S_Reddy_Certificate.pdf')" class="flex-1 py-3 border border-primary/30 text-primary font-bold rounded-lg hover:border-primary transition-all">Download</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOR -->
+            <div data-aos="fade-up" data-aos-delay="300" class="glass-card p-8 rounded-2xl border-glow transform transition-all hover:-translate-y-2 group relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -translate-y-12 translate-x-12 blur-2xl group-hover:bg-secondary/10 transition-colors"></div>
+                <div class="relative z-10">
+                    <div class="w-16 h-16 bg-secondary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-secondary/20 transition-colors">
+                        <i class="fa-solid fa-file-signature text-3xl text-secondary"></i>
+                    </div>
+                    <h3 class="text-2xl font-headline font-bold mb-3 dark:text-white">Letter of Recommendation</h3>
+                    <p class="text-on-surface-variant mb-8 leading-relaxed">Formal recommendation letter detailing my technical contributions, professional ethics, and collaborative project achievements.</p>
+                    <div class="flex gap-4">
+                        <a href="uploads/Letter of Recommendation.pdf" target="_blank" class="flex-1 py-3 bg-secondary/10 text-secondary font-bold rounded-lg hover:bg-secondary hover:text-white text-center transition-all">View</a>
+                        <button onclick="downloadFile('uploads/Letter of Recommendation.pdf', 'Rachana_S_Reddy_LOR.pdf')" class="flex-1 py-3 border border-secondary/30 text-secondary font-bold rounded-lg hover:border-secondary transition-all">Download</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -974,19 +1019,18 @@
         }
     }
 
-    function downloadResume() {
-        // We dynamically create a link to force the download
-        // This avoids fetch() CORS issues on local file:/// paths
+    function downloadFile(url, fileName) {
         const a = document.createElement('a');
         a.style.display = 'none';
-        a.href = 'uploads/rachana final resume_new.pdf';
-        
-        // This forces the downloaded file to have a nice, clean name
-        a.download = 'Rachana_S_Reddy_Resume.pdf';
-        
+        a.href = url;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+    }
+
+    function downloadResume() {
+        downloadFile('uploads/rachana final resume_new.pdf', 'Rachana_S_Reddy_Resume.pdf');
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
