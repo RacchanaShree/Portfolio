@@ -4,7 +4,22 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Rachana S Reddy | Java Full Stack Developer</title>
+    <title>Rachana S Reddy | Java Full Stack Developer & GenAI Enthusiast</title>
+    <meta name="description" content="Portfolio of Rachana S Reddy, a Java Full Stack Developer specializing in Spring Boot, REST APIs, and GenAI. Explore my projects, certifications, and technical skills.">
+    <meta name="keywords" content="Java, Full Stack Developer, Spring Boot, Portfolio, Rachana S Reddy, BE, GenAI, Web Development">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rachana-s-reddy.vercel.app/">
+    <meta property="og:title" content="Rachana S Reddy | Java Full Stack Developer">
+    <meta property="og:description" content="Building robust, scalable applications from database to UI. Check out my latest full-stack projects and certifications.">
+    <meta property="og:image" content="Rachu_proff.jpeg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Rachana S Reddy | Java Full Stack Developer">
+    <meta property="twitter:description" content="Building robust, scalable applications from database to UI. Check out my latest full-stack projects and certifications.">
+    <meta property="twitter:image" content="Rachu_proff.jpeg">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Orbitron:wght@900&amp;family=Righteous&amp;family=Rajdhani:wght@700&amp;family=Audiowide&amp;display=swap" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
@@ -403,7 +418,29 @@
         </div>
         <div class="flex items-center gap-4">
             <button id="theme-toggle" class="fa-solid fa-moon text-primary scale-110 active:scale-90 transition-all hover:rotate-12 duration-300 p-2 rounded-lg hover:bg-primary/10"></button>
-            <button class="md:hidden fa-solid fa-bars text-primary"></button>
+            <button id="mobile-menu-btn" class="md:hidden fa-solid fa-bars text-primary text-xl p-2"></button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#0d0d1a]/fb backdrop-blur-xl translate-x-full transition-transform duration-500 md:hidden">
+        <div class="flex flex-col h-full">
+            <div class="flex justify-between items-center p-6 border-b border-white/10">
+                <div class="logo-rsr-box"><span class="logo-rsr-text">RSR</span></div>
+                <button id="mobile-menu-close" class="fa-solid fa-xmark text-primary text-2xl p-2"></button>
+            </div>
+            <div class="flex flex-col gap-6 p-10 items-center text-center">
+                <a class="mobile-nav-link text-2xl font-headline font-bold text-on-surface hover:text-secondary transition-colors" href="#about">About</a>
+                <a class="mobile-nav-link text-2xl font-headline font-bold text-on-surface hover:text-secondary transition-colors" href="#skills">Skills</a>
+                <a class="mobile-nav-link text-2xl font-headline font-bold text-on-surface hover:text-secondary transition-colors" href="#projects">Projects</a>
+                <a class="mobile-nav-link text-2xl font-headline font-bold text-on-surface hover:text-secondary transition-colors" href="#experience">Experience</a>
+                <a class="mobile-nav-link text-2xl font-headline font-bold text-on-surface hover:text-secondary transition-colors" href="#credentials">Credentials</a>
+                <a class="mobile-nav-link text-2xl font-headline font-bold text-on-surface hover:text-secondary transition-colors" href="#contact">Contact</a>
+            </div>
+            <div class="mt-auto p-10 border-t border-white/10 flex justify-center gap-8">
+                <a href="https://github.com/RacchanaShree" target="_blank" class="text-2xl text-on-surface-variant hover:text-primary"><i class="fa-brands fa-github"></i></a>
+                <a href="https://linkedin.com/in/racahanasreddy" target="_blank" class="text-2xl text-on-surface-variant hover:text-secondary"><i class="fa-brands fa-linkedin"></i></a>
+            </div>
         </div>
     </div>
 </nav>
@@ -713,7 +750,6 @@
 <!-- AOS Animation Library JS -->
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-    const API_BASE_URL = '/api';
 
     // Icons map for skill categories
     const skillIcons = {
@@ -1088,6 +1124,27 @@
                 localStorage.setItem('theme', 'light');
             }
         });
+
+        // --- Mobile Menu ---
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+        if (mobileMenu && mobileMenuBtn && mobileMenuClose) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.remove('translate-x-full');
+                document.body.style.overflow = 'hidden';
+            });
+
+            const closeMenu = () => {
+                mobileMenu.classList.add('translate-x-full');
+                document.body.style.overflow = '';
+            };
+
+            mobileMenuClose.addEventListener('click', closeMenu);
+            mobileNavLinks.forEach(link => link.addEventListener('click', closeMenu));
+        }
 
         const contactForm = document.getElementById('contact-form');
         if (contactForm) {

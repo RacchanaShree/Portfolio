@@ -20,8 +20,7 @@ data/
 *.db
 *.h2.db
 
-# Storage/Uploads
-uploads/
+# Storage
 resumes/
 
 # Logs
