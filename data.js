@@ -63,7 +63,7 @@ window.PORTFOLIO_DATA = {
             type: "WORK"
         },
         {
-            role: "Full Stack Development",
+            role: "Java Full Stack Development",
             organization: "Personal Projects",
             period: "Ongoing",
             description: "Actively building and deploying personal projects to master modern backend architectures and frameworks like Spring Boot.",
